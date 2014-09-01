@@ -1,3 +1,6 @@
 [submodule "libraries/aravis"]
 	path = libraries/aravis
 	url = https://github.com/sightmachine/aravis.git
+[submodule "libraries/python-aravis"]
+	path = libraries/python-aravis
+	url = https://github.com/oroulet/python-aravis.git
