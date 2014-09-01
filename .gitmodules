@@ -1,0 +1,3 @@
+[submodule "libraries/aravis"]
+	path = libraries/aravis
+	url = https://github.com/sightmachine/aravis.git
