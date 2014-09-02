@@ -39,7 +39,7 @@ class GpsController(threading.Thread):
             # grab EACH set of gpsd info to clear the buffer
             self.gpsd.next()
 
-    def stopController(self):
+    def stop_controller(self):
         self.running = False
   
     @property
@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
     finally:
         print "Stopping gps controller"
-        gpsc.stopController()
+        gpsc.stop_controller()
         #wait for the tread to finish
         gpsc.join()
       

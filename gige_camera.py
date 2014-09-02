@@ -26,35 +26,35 @@ import aravis
 import time
 from PIL import Image
 
-
 def take_snapshot():
-  camera = aravis.Camera()
+    camera = aravis.Camera()
 
-  if camera:
-    print 'Found camera: %s' % camera.name
+    if camera:
+        print 'Found camera: %s' % camera.name
 
-    # get max width and height
-    width = camera.get_width_bounds()[1]
-    height = camera.get_height_bounds()[1]
+        # get max width and height
+        width = camera.get_width_bounds()[1]
+        height = camera.get_height_bounds()[1]
 
-    # set max region
-    camera.set_region(0, 0, width, height)
+        # set max region
+        camera.set_region(0, 0, width, height)
+        
+        print 'Taking snapshot %dx%d...' % (width, height)
+
+        camera.start_acquisition()
+
+        frame = camera.pop()
+        
+        camera.stop_acquisition()
+
+    del camera
+
+    return frame
+
+def save_image(frame, filename):
+    image = Image.fromarray(frame)
     
-    print 'Taking snapshot %dx%d...' % (width, height)
-
-    camera.start_acquisition()
-
-    frame = camera.pop()
-
-    im = Image.fromarray(frame)
-
-    filename = '/images/' + time.strftime('%d-%m-%Y_%H-%M-%S') + '.jpg'
-
-    im.save(filename)
-
-    camera.stop_acquisition()
-
-  del camera
+    image.save(filename)
 
 if __name__ == '__main__':
-  take_snapshot()
+    save_image(take_snapshot(), '/images/' + time.strftime('%d-%m-%Y_%H-%M-%S') + '.jpg')
