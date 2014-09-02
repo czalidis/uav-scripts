@@ -22,39 +22,46 @@
 # 
 # Author: Christos Zalidis <zalidis@gmail.com>
 
-import aravis
 import time
-from PIL import Image
+import gps_controller
+import gige_camera
+import image_exif
 
-def take_snapshot():
-    camera = aravis.Camera()
+FOLDER = '/images/'
+EXTENSION = '.jpg'
 
-    if camera:
-        print 'Found camera: %s' % camera.name
+gpsc = gps_controller.GpsController()
+gpsc.start()
 
-        # get max width and height
-        width = camera.get_width_bounds()[1]
-        height = camera.get_height_bounds()[1]
+try:
+    while True:
+        raw_input('Press Enter to take snapshot')
 
-        # set max region
-        camera.set_region(0, 0, width, height)
+        # Test if we have a gps fix, if we don't, proceed
+        if gpsc.fix.latitude == 0.0 or not gpsc.utc:
+             filename = FOLDER + time.strftime('%d-%m-%Y_%H-%M-%S') + EXTENSION
+        else:
+            filename = FOLDER + gpsc.utc + EXTENSION
         
-        print 'Taking snapshot %dx%d...' % (width, height)
+        # Take a frame using GigE Vision protocol
+        frame = gige_camera.take_snapshot()
 
-        camera.start_acquisition()
-
-        frame = camera.pop()
+        # Save above frame to file
+        gige_camera.save_image(frame, filename)
         
-        camera.stop_acquisition()
+        # Test if we have a gps fix, if we don't, proceed
+        if gpsc.fix.latitude !=  0.0 or gpsc.utc:
+            # Set gps coordinates to image's exif
+            image_exif.set_gps_location(filename, gpsc.fix.latitude, gpsc.fix.longitude, gpsc.fix.altitude, gpsc.utc)
 
-    del camera
 
-    return frame
+except KeyboardInterrupt:
+    print '\nAborting...'
+    pass
 
-def save_image(frame, filename):
-    print 'Saving to ' + filename + '...'
-    image = Image.fromarray(frame)
-    image.save(filename)
+finally:
+    gpsc.stop_controller()
+    # wait for the tread to finish
+    gpsc.join()
 
-if __name__ == '__main__':
-    save_image(take_snapshot(), '/images/' + time.strftime('%d-%m-%Y_%H-%M-%S') + '.jpg')
+

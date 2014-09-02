@@ -1,0 +1,6 @@
+#!/bin/bash
+
+export GI_TYPELIB_PATH=$GI_TYPELIB_PATH:/home/pi/aravis/src
+export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/home/pi/aravis/src/.libs
+
+python $*
