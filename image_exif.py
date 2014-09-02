@@ -66,8 +66,8 @@ def set_gps_location(file_name, lat, lng, time):
     print lng_deg
     
     # convert decimal coordinates into degrees, munutes and seconds
-    exiv_lat = (pyexiv2.Rational(lat_deg[0]*60+lat_deg[1],60),pyexiv2.Rational(lat_deg[2]*100,6000), pyexiv2.Rational(0, 1))
-    exiv_lng = (pyexiv2.Rational(lng_deg[0]*60+lng_deg[1],60),pyexiv2.Rational(lng_deg[2]*100,6000), pyexiv2.Rational(0, 1))
+    exiv_lat = (pyexiv2.Rational(lat_deg[0], 1), pyexiv2.Rational(lat_deg[1], 1), pyexiv2.Rational(lat_deg[2]*1000, 1000))
+    exiv_lng = (pyexiv2.Rational(lng_deg[0], 1), pyexiv2.Rational(lng_deg[1] ,1), pyexiv2.Rational(lng_deg[2]*1000, 1000))
 
     exiv_image = pyexiv2.ImageMetadata(file_name)
     exiv_image.read()
@@ -80,6 +80,9 @@ def set_gps_location(file_name, lat, lng, time):
     exiv_image["Exif.Image.GPSTag"] = 654
     exiv_image["Exif.GPSInfo.GPSMapDatum"] = "WGS-84"
     exiv_image["Exif.GPSInfo.GPSVersionID"] = '2 0 0 0'
+
+    _set_date_time(exiv_image, time)
+    _set_model(exiv_image, 'Flir Inc', 'A65 Thermal Camera')
     
     exiv_image.write()
 
@@ -87,8 +90,12 @@ def _set_date_time(exiv_image, time):
 
    exiv_image["Exif.Image.DateTime"] = time
    exiv_image["Exif.Image.DateTimeDigitized"] = exiv_image["Exif.Image.DateTime"]
-   exiv_image["Exif.GPSInfo.GPSTimeStamp"] = time
-   exiv_image["Exif.GPSInfo.GPSDateStamp"] = time
+   #exiv_image["Exif.GPSInfo.GPSTimeStamp"] = time
+   #exiv_image["Exif.GPSInfo.GPSDateStamp"] = time
+
+def _set_model(exiv_image, make, model):
+  exiv_image["Exif.Image.Make"] = make
+  exiv_image["Exif.Image.Model"] = model
 
 if '__name__' == '__main__':
     set_gps_location(sys.argv[1], float(sys.argv[2]), float(sys.argv[3]), sys.argv[4])
