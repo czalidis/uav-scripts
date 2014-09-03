@@ -23,45 +23,77 @@
 # Author: Christos Zalidis <zalidis@gmail.com>
 
 import time
+import sys
 import gps_controller
 import gige_camera
+import aravis
 import image_exif
+import RPi.GPIO as GPIO
+import socket
 
 FOLDER = '/images/'
 EXTENSION = '.jpg'
 
-gpsc = gps_controller.GpsController()
-gpsc.start()
-
 try:
+    # setup trigger, using GPIO
+    pin = 12
+    GPIO.setmode(GPIO.BOARD)
+    GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+    # setup gps client
+    gpsc = gps_controller.GpsController()
+    gpsc.start()
+
     while True:
-        raw_input('Press Enter to take snapshot')
+        try:
+            #raw_input('Press Enter to take snapshot')
+            print 'Waiting for external trigger on pin %s...' % pin
+            GPIO.wait_for_edge(pin, GPIO.FALLING)
+            print 'BOOM!'
 
-        # Test if we have a gps fix, if we don't, proceed
-        if gpsc.fix.latitude == 0.0 or not gpsc.utc:
-             filename = FOLDER + time.strftime('%d-%m-%Y_%H-%M-%S') + EXTENSION
-        else:
-            filename = FOLDER + gpsc.utc + EXTENSION
-        
-        # Take a frame using GigE Vision protocol
-        frame = gige_camera.take_snapshot()
+            # Test if we have a gps fix, if we don't, proceed
+            if gpsc.fix.latitude == 0.0 or not gpsc.utc:
+                 filename = FOLDER + time.strftime('%d-%m-%Y_%H-%M-%S') + EXTENSION
+            else:
+                filename = FOLDER + gpsc.utc + EXTENSION
+            
+            # Take a frame using GigE Vision protocol
+            frame = gige_camera.take_snapshot()
 
-        # Save above frame to file
-        gige_camera.save_image(frame, filename)
-        
-        # Test if we have a gps fix, if we don't, proceed
-        if gpsc.fix.latitude !=  0.0 or gpsc.utc:
-            # Set gps coordinates to image's exif
-            image_exif.set_gps_location(filename, gpsc.fix.latitude, gpsc.fix.longitude, gpsc.fix.altitude, gpsc.utc)
-
+            # Save above frame to file
+            gige_camera.save_image(frame, filename)
+            
+            # Test if we have a gps fix, if we don't, proceed
+            if gpsc.fix.latitude !=  0.0 or gpsc.utc:
+                # Set gps coordinates to image's exif
+                image_exif.set_gps_location(filename, gpsc.fix.latitude, gpsc.fix.longitude, gpsc.fix.altitude, gpsc.utc)
+        except KeyboardInterrupt:
+            break
+            
+        except aravis.AravisException:
+            print 'Error: No camera found!'
+            # blink a led for 10 secs
+            continue
 
 except KeyboardInterrupt:
     print '\nAborting...'
     pass
 
-finally:
-    gpsc.stop_controller()
-    # wait for the tread to finish
-    gpsc.join()
+except socket.error:
+    print 'Error: GPS not found!'
+    print 'Aborting...'
+    # blink a led here
+    sys.exit(1)
 
+except:
+    # blink a different led 
+    raise
+
+# stop gps controller
+gpsc.stop_controller()
+# wait for the tread to finish
+gpsc.join()
+
+# cleanup GPIO
+GPIO.cleanup()
 
