@@ -47,8 +47,6 @@ def take_snapshot():
         
         camera.stop_acquisition()
 
-    del camera
-
     return frame
 
 def save_image(frame, filename):

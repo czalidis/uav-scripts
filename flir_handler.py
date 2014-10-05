@@ -55,7 +55,9 @@ try:
             if gpsc.fix.latitude == 0.0 or not gpsc.utc:
                  filename = FOLDER + time.strftime('%d-%m-%Y_%H-%M-%S') + EXTENSION
             else:
-                filename = FOLDER + gpsc.utc + EXTENSION
+                # replace ':' with '-', so Windows understands the filename
+                utc = gpsc.utc.replace(':', '-')
+                filename = FOLDER + utc + EXTENSION
             
             # Take a frame using GigE Vision protocol
             frame = gige_camera.take_snapshot()
