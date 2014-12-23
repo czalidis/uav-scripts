@@ -32,6 +32,9 @@ def take_snapshot():
     if camera:
         print 'Found camera: %s' % camera.name
 
+        camera.set_feature('PixelFormat', 'Mono14')
+        camera.set_feature('DigitalOutput', 'bit14bit')
+
         # get max width and height
         width = camera.get_width_bounds()[1]
         height = camera.get_height_bounds()[1]
@@ -51,7 +54,8 @@ def take_snapshot():
 
 def save_image(frame, filename):
     print 'Saving to ' + filename + '...'
-    image = Image.fromarray(frame)
+    final_frame = frame / 20
+    image = Image.fromarray(final_frame.astype('uint8'))
     image.save(filename)
 
 if __name__ == '__main__':
