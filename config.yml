@@ -1,0 +1,14 @@
+# Set camera's pixel_format 
+# possible values: 8, 14
+frame_bit_depth: 14
+# Set output image params
+# depth is considered only when frame_bit_depth is 14
+# save_normalized is considered only when depth is 16
+# scale is considered when frame_bit_depth is 14 and depth is 8
+# 16-bit images can only be saved in tiff format
+out_image:
+  depth: 16 #8-bit, 16-bit
+  format: tiff #jpg, tiff
+  save_normalized: false 
+  scale_min: 2000 
+  scale_max: 5000
