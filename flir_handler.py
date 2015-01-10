@@ -30,11 +30,34 @@ import aravis
 import image_exif
 import RPi.GPIO as GPIO
 import socket
+import os
+import yaml
+
+__location__ = os.path.realpath(
+        os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
 FOLDER = '/images/'
-EXTENSION = '.jpg'
+EXTENSION = '.tiff'
+config = None
+config_path = os.path.join(FOLDER, 'config.yml')
+default_config_path = os.path.join(__location__, 'config.yml')
 
 try:
+    # search for config file, else load default
+    if os.path.isfile(config_path):
+        config_file  = config_path
+    else:
+        config_file = default_config_path
+
+    with open(config_file) as f:
+        config = yaml.safe_load(f)
+
+    EXTENSION = '.' + config['out_image']['format']
+
+    # 16-bit images only saved in tiff
+    if config['out_image']['depth'] != 8:
+        EXTENSION = '.tiff'
+    
     # setup trigger, using GPIO
     pin = 12
     GPIO.setmode(GPIO.BOARD)
@@ -60,10 +83,10 @@ try:
                 filename = FOLDER + utc + EXTENSION
             
             # Take a frame using GigE Vision protocol
-            frame = gige_camera.take_snapshot()
+            frame = gige_camera.take_snapshot(config)
 
             # Save above frame to file
-            gige_camera.save_image(frame, filename)
+            gige_camera.save_image(frame, filename, config)
             
             # Test if we have a gps fix, if we don't, proceed
             if gpsc.fix.latitude !=  0.0 or gpsc.utc:

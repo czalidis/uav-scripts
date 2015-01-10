@@ -24,16 +24,20 @@
 
 import aravis
 import time
+import os
 from PIL import Image
+import numpy
 
-def take_snapshot():
+def take_snapshot(config=None):
     camera = aravis.Camera()
 
     if camera:
+
         print 'Found camera: %s' % camera.name
 
-        camera.set_feature('PixelFormat', 'Mono14')
-        camera.set_feature('DigitalOutput', 'bit14bit')
+        if config is not None and config['frame_bit_depth'] == 14:
+            camera.set_feature('PixelFormat', 'Mono14')
+            camera.set_feature('DigitalOutput', 'bit14bit')
 
         # get max width and height
         width = camera.get_width_bounds()[1]
@@ -52,11 +56,41 @@ def take_snapshot():
 
     return frame
 
-def save_image(frame, filename):
+def save_image(frame, filename, config=None):
+    save_normalized = False
+    if config is None:
+        image = Image.fromarray(frame)
+    else:
+        if config['frame_bit_depth'] == 14:
+            if config['out_image']['depth'] == 16:
+                image = Image.fromarray(frame, 'I;16')
+                save_normalized = config['out_image']['save_normalized']
+            else:
+                # scale image to 8-bits
+                scaled_frame = numpy.copy(frame)
+                min_value = config['out_image']['scale_min']
+                max_value = config['out_image']['scale_max']
+                scaled_frame -= min_value
+                scaled_frame *= (255.0 / (max_value - min_value))
+                image = Image.fromarray(numpy.clip(scaled_frame, 0, 255).astype('uint8'))
+        else:
+            image = Image.fromarray(frame)
+
     print 'Saving to ' + filename + '...'
-    final_frame = frame / 20
-    image = Image.fromarray(final_frame.astype('uint8'))
     image.save(filename)
+
+    # save a normalized copy; 16-bit also
+    if save_normalized:
+       norm_frame = numpy.copy(frame)
+       frame_min = frame.min()
+       frame_max = frame.max()
+       norm_frame -= frame_min
+       norm_frame *= (65535.0 / (frame_max - frame_min))
+       norm_image = Image.fromarray(norm_frame, 'I;16')
+
+       # save the normalized image with a -norm before extension
+       path = os.path.splitext(filename)
+       norm_image.save(path[0] + '-norm' + path[1])
 
 if __name__ == '__main__':
     save_image(take_snapshot(), '/images/' + time.strftime('%d-%m-%Y_%H-%M-%S') + '.jpg')
