@@ -38,6 +38,10 @@ def take_snapshot(config=None):
         if config is not None and config['frame_bit_depth'] == 14:
             camera.set_feature('PixelFormat', 'Mono14')
             camera.set_feature('DigitalOutput', 'bit14bit')
+            # Stream settings to work with 14-bit frames
+            camera.set_feature('GevMCTT', '400')
+            camera.set_feature('GevMCRC', '3')
+            camera.set_feature('GevSCPSPacketSize', '1444')
 
         # get max width and height
         width = camera.get_width_bounds()[1]
